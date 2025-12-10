@@ -9,6 +9,9 @@ import SwiftUI
 
 struct ContentView: View {
     
+    // Callback para salvar a corrida no "dono" dessa tela
+    var onSave: (Run) -> Void = { _ in }
+    
     @State private var timeMinutes: String = ""
     @State private var distanceKm: String = ""
     @State private var date: Date = Date()
@@ -19,6 +22,10 @@ struct ContentView: View {
               distance > 0 else { return nil }
         
         return time / distance
+    }
+    
+    var isFormValid: Bool {
+        pace != nil
     }
     
     var body: some View {
@@ -43,9 +50,41 @@ struct ContentView: View {
                             .foregroundStyle(.secondary)
                     }
                 }
+                
+                Section {
+                    Button {
+                        saveRun()
+                    } label: {
+                        HStack {
+                            Image(systemName: "square.and.arrow.down.fill")
+                            Text("Salvar corrida")
+                        }
+                        .frame(maxWidth: .infinity, alignment: .center)
+                    }
+                    .disabled(!isFormValid)
+                }
             }
             .navigationTitle("My Pace")
         }
+    }
+    
+    private func saveRun() {
+        guard let time = Double(timeMinutes),
+              let distance = Double(distanceKm),
+              distance > 0 else { return }
+        
+        let newRun = Run(
+            date: date,
+            distanceKm: distance,
+            timeMinutes: time
+        )
+        
+        onSave(newRun)
+        
+        // Limpa os campos após salvar
+        timeMinutes = ""
+        distanceKm = ""
+        date = Date()
     }
 }
 
