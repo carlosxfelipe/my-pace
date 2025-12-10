@@ -58,7 +58,9 @@ struct LoginView: View {
                         .frame(maxWidth: .infinity, alignment: .center)
                     }
                     .disabled(email.isEmpty || password.isEmpty || isLoading)
-                    
+                }
+                
+                Section {
                     Button("Criar conta") {
                         showRegister = true
                     }
@@ -87,7 +89,13 @@ struct LoginView: View {
         do {
             try await authManager.login(email: email, password: password)
             
-            // Sincroniza dados após login bem-sucedido
+            // 1. Faz upload das corridas locais para a API
+            try await syncManager.uploadLocalRuns(
+                modelContext: modelContext,
+                authManager: authManager
+            )
+            
+            // 2. Baixa corridas da API que não existem localmente
             try await syncManager.syncFromAPI(
                 modelContext: modelContext,
                 authManager: authManager

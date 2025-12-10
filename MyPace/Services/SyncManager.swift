@@ -132,16 +132,31 @@ class SyncManager {
         // Faz upload das corridas que só existem localmente
         for run in localRuns where !apiIds.contains(run.id) {
             do {
-                _ = try await APIService.shared.createRun(
+                let apiRun = try await APIService.shared.createRun(
                     token: token,
                     date: run.date,
                     distanceKm: run.distanceKm,
                     timeMinutes: run.timeMinutes
                 )
-                print("✅ Corrida local enviada para API")
+                
+                // Remove a corrida local antiga (com ID diferente)
+                modelContext.delete(run)
+                
+                // Adiciona a nova corrida com o ID da API
+                let newRun = Run(
+                    id: apiRun.id,
+                    date: apiRun.date,
+                    distanceKm: Double(apiRun.distanceKm) ?? 0,
+                    timeMinutes: Double(apiRun.timeMinutes) ?? 0
+                )
+                modelContext.insert(newRun)
+                
+                print("✅ Corrida local sincronizada com API (ID: \(apiRun.id))")
             } catch {
                 print("⚠️ Erro ao enviar corrida: \(error)")
             }
         }
+        
+        try modelContext.save()
     }
 }
