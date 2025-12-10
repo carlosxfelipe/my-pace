@@ -6,13 +6,18 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct HistoryView: View {
-    @Binding var runs: [Run]
+    let runs: [Run]
+    let modelContext: ModelContext
+    let authManager: AuthManager
+    let syncManager: SyncManager
     
     private var dateFormatter: DateFormatter {
         let df = DateFormatter()
         df.dateStyle = .medium
+        df.locale = Locale(identifier: "pt_BR")
         return df
     }
     
@@ -23,11 +28,11 @@ struct HistoryView: View {
                     ContentUnavailableView(
                         "Nenhuma corrida salva",
                         systemImage: "clock.arrow.circlepath",
-                        description: Text("Salve uma corrida na aba My Pace para vê-la aqui.")
+                        description: Text("Salve uma corrida na aba Início para vê-la aqui.")
                     )
                 } else {
                     List {
-                        ForEach(runs.sorted { $0.date > $1.date }) { run in
+                        ForEach(runs) { run in
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(String(format: "%.2f min/km", run.pace))
                                     .font(.headline)
@@ -57,22 +62,33 @@ struct HistoryView: View {
     }
     
     private func deleteRuns(at offsets: IndexSet) {
-        let sortedRuns = runs.sorted { $0.date > $1.date }
         for index in offsets {
-            if let runToDelete = sortedRuns[safe: index] {
-                runs.removeAll { $0.id == runToDelete.id }
+            let run = runs[index]
+            
+            // Deleta usando SyncManager (local + API se logado)
+            Task {
+                do {
+                    try await syncManager.deleteRun(
+                        run,
+                        modelContext: modelContext,
+                        authManager: authManager
+                    )
+                } catch {
+                    print("Erro ao deletar: \(error)")
+                }
             }
         }
     }
 }
 
-extension Array {
-    subscript(safe index: Int) -> Element? {
-        return indices.contains(index) ? self[index] : nil
-    }
-}
-
 #Preview {
-    @Previewable @State var runs: [Run] = []
-    HistoryView(runs: $runs)
+    let config = ModelConfiguration(isStoredInMemoryOnly: true)
+    let container = try! ModelContainer(for: Run.self, configurations: config)
+    
+    return HistoryView(
+        runs: [],
+        modelContext: container.mainContext,
+        authManager: AuthManager.shared,
+        syncManager: SyncManager.shared
+    )
 }

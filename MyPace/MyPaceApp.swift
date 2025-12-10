@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 @main
 struct MyPaceApp: App {
@@ -13,5 +14,6 @@ struct MyPaceApp: App {
         WindowGroup {
             RootView()
         }
+        .modelContainer(for: Run.self)
     }
 }

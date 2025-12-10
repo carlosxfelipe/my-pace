@@ -6,11 +6,13 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct ContentView: View {
+    @Environment(\.modelContext) private var modelContext
     
-    // Callback para salvar a corrida no "dono" dessa tela
-    var onSave: (Run) -> Void = { _ in }
+    let authManager: AuthManager
+    let syncManager: SyncManager
     
     @State private var timeMinutes: String = ""
     @State private var distanceKm: String = ""
@@ -90,7 +92,18 @@ struct ContentView: View {
             timeMinutes: time
         )
         
-        onSave(newRun)
+        // Salva usando SyncManager (local + API se logado)
+        Task {
+            do {
+                try await syncManager.saveRun(
+                    newRun,
+                    modelContext: modelContext,
+                    authManager: authManager
+                )
+            } catch {
+                print("Erro ao salvar: \(error)")
+            }
+        }
         
         // Limpa os campos após salvar
         timeMinutes = ""
@@ -100,5 +113,9 @@ struct ContentView: View {
 }
 
 #Preview {
-    ContentView()
+    ContentView(
+        authManager: AuthManager.shared,
+        syncManager: SyncManager.shared
+    )
+        .modelContainer(for: Run.self, inMemory: true)
 }

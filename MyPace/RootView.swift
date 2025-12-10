@@ -6,10 +6,16 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct RootView: View {
+    @Environment(\.modelContext) private var modelContext
+    @Query(sort: \Run.date, order: .reverse) private var runs: [Run]
+    
     @State private var selectedTab: MainTab = .run
-    @State private var runs: [Run] = []
+    @State private var authManager = AuthManager.shared
+    @State private var syncManager = SyncManager.shared
+    
     @AppStorage("selectedAppearance") private var selectedAppearance: String = "system"
     
     private var colorScheme: ColorScheme? {
@@ -26,15 +32,24 @@ struct RootView: View {
             Group {
                 switch selectedTab {
                 case .run:
-                    ContentView { newRun in
-                        runs.append(newRun)
-                    }
+                    ContentView(
+                        authManager: authManager,
+                        syncManager: syncManager
+                    )
                     
                 case .history:
-                    HistoryView(runs: $runs)
+                    HistoryView(
+                        runs: runs,
+                        modelContext: modelContext,
+                        authManager: authManager,
+                        syncManager: syncManager
+                    )
                     
                 case .settings:
-                    SettingsView()
+                    SettingsView(
+                        authManager: authManager,
+                        syncManager: syncManager
+                    )
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
