@@ -33,13 +33,24 @@ struct ContentView: View {
             Form {
                 
                 Section("Informações da Corrida") {
-                    TextField("Tempo (min)", text: $timeMinutes)
-                        .keyboardType(.decimalPad)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Tempo (minutos)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        TextField("Ex: 30", text: $timeMinutes)
+                            .keyboardType(.decimalPad)
+                    }
                     
-                    TextField("Distância (km)", text: $distanceKm)
-                        .keyboardType(.decimalPad)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Distância (km)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        TextField("Ex: 5", text: $distanceKm)
+                            .keyboardType(.decimalPad)
+                    }
                     
                     DatePicker("Data", selection: $date, displayedComponents: .date)
+                        .environment(\.locale, Locale(identifier: "pt_BR"))
                 }
                 
                 Section("Pace") {

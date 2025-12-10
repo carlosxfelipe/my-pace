@@ -31,7 +31,7 @@ struct RootView: View {
                     }
                     
                 case .history:
-                    HistoryView(runs: runs)
+                    HistoryView(runs: $runs)
                     
                 case .settings:
                     SettingsView()
