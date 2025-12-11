@@ -69,12 +69,22 @@ struct SettingsView: View {
                             }
                         }
                         
-                        Button("Sair", role: .destructive) {
+                        Button(role: .destructive) {
                             showLogoutConfirmation = true
+                        } label: {
+                            HStack {
+                                Image(systemName: "rectangle.portrait.and.arrow.right")
+                                Text("Sair")
+                            }
                         }
                         
-                        Button("Encerrar conta", role: .destructive) {
+                        Button(role: .destructive) {
                             showDeleteConfirmation = true
+                        } label: {
+                            HStack {
+                                Image(systemName: "xmark.circle.fill")
+                                Text("Encerrar conta")
+                            }
                         }
                     } else {
                         VStack(alignment: .leading, spacing: 4) {
@@ -134,7 +144,7 @@ struct SettingsView: View {
             } message: {
                 Text("Tem certeza que deseja encerrar sua conta? Esta ação não pode ser desfeita e todos os seus dados serão permanentemente deletados.")
             }
-            .confirmationDialog("Sair da Conta", isPresented: $showLogoutConfirmation, titleVisibility: .visible) {
+            .alert("Sair da Conta", isPresented: $showLogoutConfirmation) {
                 Button("Sair e manter dados locais") {
                     authManager.logout()
                 }
