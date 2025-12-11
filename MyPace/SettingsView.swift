@@ -19,6 +19,7 @@ struct SettingsView: View {
     @State private var showLogin = false
     @State private var showChangePassword = false
     @State private var showDeleteConfirmation = false
+    @State private var showLogoutConfirmation = false
     @State private var isSyncing = false
     @State private var isDeleting = false
     
@@ -69,7 +70,7 @@ struct SettingsView: View {
                         }
                         
                         Button("Sair", role: .destructive) {
-                            authManager.logout()
+                            showLogoutConfirmation = true
                         }
                         
                         Button("Encerrar conta", role: .destructive) {
@@ -133,6 +134,17 @@ struct SettingsView: View {
             } message: {
                 Text("Tem certeza que deseja encerrar sua conta? Esta ação não pode ser desfeita e todos os seus dados serão permanentemente deletados.")
             }
+            .confirmationDialog("Sair da Conta", isPresented: $showLogoutConfirmation, titleVisibility: .visible) {
+                Button("Sair e manter dados locais") {
+                    authManager.logout()
+                }
+                Button("Sair e limpar todos os dados", role: .destructive) {
+                    logout(clearLocalData: true)
+                }
+                Button("Cancelar", role: .cancel) { }
+            } message: {
+                Text("Deseja manter suas corridas salvas localmente após sair?")
+            }
         }
     }
     
@@ -149,6 +161,19 @@ struct SettingsView: View {
         }
         
         isSyncing = false
+    }
+    
+    private func logout(clearLocalData: Bool) {
+        if clearLocalData {
+            // Deleta todas as corridas locais
+            do {
+                try modelContext.delete(model: Run.self)
+                try modelContext.save()
+            } catch {
+                print("Erro ao limpar dados locais: \(error)")
+            }
+        }
+        authManager.logout()
     }
     
     private func deleteAccount() {

@@ -14,6 +14,8 @@ struct HistoryView: View {
     let authManager: AuthManager
     let syncManager: SyncManager
     
+    @State private var showClearAllConfirmation = false
+    
     private var dateFormatter: DateFormatter {
         let df = DateFormatter()
         df.dateStyle = .medium
@@ -58,6 +60,26 @@ struct HistoryView: View {
                 }
             }
             .navigationTitle("Histórico")
+            .toolbar {
+                if !runs.isEmpty {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            showClearAllConfirmation = true
+                        } label: {
+                            Image(systemName: "trash")
+                                .foregroundStyle(.red)
+                        }
+                    }
+                }
+            }
+            .alert("Limpar Todos os Registros", isPresented: $showClearAllConfirmation) {
+                Button("Cancelar", role: .cancel) { }
+                Button("Limpar Tudo", role: .destructive) {
+                    clearAllRuns()
+                }
+            } message: {
+                Text("Tem certeza que deseja deletar todas as \(runs.count) corridas? Esta ação não pode ser desfeita.")
+            }
         }
     }
     
@@ -67,6 +89,22 @@ struct HistoryView: View {
             
             // Deleta usando SyncManager (local + API se logado)
             Task {
+                do {
+                    try await syncManager.deleteRun(
+                        run,
+                        modelContext: modelContext,
+                        authManager: authManager
+                    )
+                } catch {
+                    print("Erro ao deletar: \(error)")
+                }
+            }
+        }
+    }
+    
+    private func clearAllRuns() {
+        Task {
+            for run in runs {
                 do {
                     try await syncManager.deleteRun(
                         run,
