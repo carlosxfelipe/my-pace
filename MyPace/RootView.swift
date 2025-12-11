@@ -12,7 +12,6 @@ struct RootView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \Run.date, order: .reverse) private var runs: [Run]
     
-    @State private var selectedTab: MainTab = .run
     @State private var authManager = AuthManager.shared
     @State private var syncManager = SyncManager.shared
     
@@ -27,48 +26,30 @@ struct RootView: View {
     }
     
     var body: some View {
-        ZStack(alignment: .bottom) {
-            
-            Group {
-                switch selectedTab {
-                case .run:
-                    ContentView(
-                        authManager: authManager,
-                        syncManager: syncManager
-                    )
-                    
-                case .history:
-                    HistoryView(
-                        runs: runs,
-                        modelContext: modelContext,
-                        authManager: authManager,
-                        syncManager: syncManager
-                    )
-                    
-                case .settings:
-                    SettingsView(
-                        authManager: authManager,
-                        syncManager: syncManager
-                    )
-                }
+        TabView {
+            Tab("Início", systemImage: "figure.run") {
+                ContentView(
+                    authManager: authManager,
+                    syncManager: syncManager
+                )
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
             
-            GlassBottomBar(selectedTab: $selectedTab)
+            Tab("Histórico", systemImage: "clock.arrow.circlepath") {
+                HistoryView(
+                    runs: runs,
+                    modelContext: modelContext,
+                    authManager: authManager,
+                    syncManager: syncManager
+                )
+            }
+            
+            Tab("Config.", systemImage: "gearshape") {
+                SettingsView(
+                    authManager: authManager,
+                    syncManager: syncManager
+                )
+            }
         }
-        // garante que a barra não seja empurrada pelo teclado
-        .ignoresSafeArea(.keyboard, edges: .bottom)
-        .background(
-            LinearGradient(
-                colors: [
-                    Color(.systemBackground),
-                    Color(.systemGray6)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .ignoresSafeArea()
-        )
         .preferredColorScheme(colorScheme)
     }
 }
