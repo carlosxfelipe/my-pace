@@ -19,6 +19,14 @@ struct SettingsView: View {
     @State private var showLogin = false
     @State private var isSyncing = false
     
+    private var dateFormatter: DateFormatter {
+        let df = DateFormatter()
+        df.locale = Locale(identifier: "pt_BR")
+        df.dateStyle = .short
+        df.timeStyle = .short
+        return df
+    }
+    
     var body: some View {
         NavigationStack {
             Form {
@@ -88,7 +96,7 @@ struct SettingsView: View {
                 
                 if authManager.isLoggedIn, let lastSync = syncManager.lastSyncDate {
                     Section {
-                        Text("Última sincronização: \(lastSync.formatted(date: .abbreviated, time: .shortened))")
+                        Text("Última sincronização: \(dateFormatter.string(from: lastSync))")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
