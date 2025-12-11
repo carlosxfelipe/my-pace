@@ -66,4 +66,30 @@ class AuthManager {
         self.token = nil
         self.userEmail = nil
     }
+    
+    func changePassword(oldPassword: String, newPassword: String) async throws {
+        guard let currentToken = token else {
+            throw APIError.unauthorized
+        }
+        
+        let newToken = try await APIService.shared.changePassword(
+            token: currentToken,
+            oldPassword: oldPassword,
+            newPassword: newPassword
+        )
+        
+        // Atualiza com o novo token
+        self.token = newToken
+    }
+    
+    func deleteAccount() async throws {
+        guard let currentToken = token else {
+            throw APIError.unauthorized
+        }
+        
+        try await APIService.shared.deleteAccount(token: currentToken)
+        
+        // Faz logout após deletar conta
+        logout()
+    }
 }

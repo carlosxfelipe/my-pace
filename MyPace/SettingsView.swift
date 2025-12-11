@@ -17,7 +17,10 @@ struct SettingsView: View {
     @AppStorage("selectedAppearance") private var selectedAppearance: String = "system"
     @State private var notificationsEnabled = false
     @State private var showLogin = false
+    @State private var showChangePassword = false
+    @State private var showDeleteConfirmation = false
     @State private var isSyncing = false
+    @State private var isDeleting = false
     
     private var dateFormatter: DateFormatter {
         let df = DateFormatter()
@@ -56,8 +59,21 @@ struct SettingsView: View {
                         }
                         .disabled(isSyncing)
                         
+                        Button {
+                            showChangePassword = true
+                        } label: {
+                            HStack {
+                                Image(systemName: "key.fill")
+                                Text("Alterar senha")
+                            }
+                        }
+                        
                         Button("Sair", role: .destructive) {
                             authManager.logout()
+                        }
+                        
+                        Button("Encerrar conta", role: .destructive) {
+                            showDeleteConfirmation = true
                         }
                     } else {
                         VStack(alignment: .leading, spacing: 4) {
@@ -106,6 +122,17 @@ struct SettingsView: View {
             .sheet(isPresented: $showLogin) {
                 LoginView(authManager: authManager, syncManager: syncManager)
             }
+            .sheet(isPresented: $showChangePassword) {
+                ChangePasswordView(authManager: authManager)
+            }
+            .alert("Encerrar Conta", isPresented: $showDeleteConfirmation) {
+                Button("Cancelar", role: .cancel) { }
+                Button("Encerrar", role: .destructive) {
+                    deleteAccount()
+                }
+            } message: {
+                Text("Tem certeza que deseja encerrar sua conta? Esta ação não pode ser desfeita e todos os seus dados serão permanentemente deletados.")
+            }
         }
     }
     
@@ -122,6 +149,25 @@ struct SettingsView: View {
         }
         
         isSyncing = false
+    }
+    
+    private func deleteAccount() {
+        isDeleting = true
+        
+        Task {
+            do {
+                try await authManager.deleteAccount()
+                
+                await MainActor.run {
+                    isDeleting = false
+                }
+            } catch {
+                await MainActor.run {
+                    isDeleting = false
+                    print("Erro ao encerrar conta: \(error)")
+                }
+            }
+        }
     }
 }
 

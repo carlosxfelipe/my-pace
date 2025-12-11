@@ -108,6 +108,68 @@ class APIService {
         return authResponse.token
     }
     
+    struct ChangePasswordRequest: Codable {
+        let oldPassword: String
+        let newPassword: String
+        let newPasswordConfirm: String
+        
+        enum CodingKeys: String, CodingKey {
+            case oldPassword = "old_password"
+            case newPassword = "new_password"
+            case newPasswordConfirm = "new_password_confirm"
+        }
+    }
+    
+    struct ChangePasswordResponse: Codable {
+        let message: String
+        let token: String
+    }
+    
+    func changePassword(token: String, oldPassword: String, newPassword: String) async throws -> String {
+        let url = URL(string: "\(baseURL)/api/auth/change-password/")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "PUT"
+        request.setValue("Token \(token)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let body = ChangePasswordRequest(
+            oldPassword: oldPassword,
+            newPassword: newPassword,
+            newPasswordConfirm: newPassword
+        )
+        request.httpBody = try JSONEncoder().encode(body)
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.invalidResponse
+        }
+        
+        guard httpResponse.statusCode == 200 else {
+            if httpResponse.statusCode == 400 {
+                throw APIError.serverError("Senha atual incorreta")
+            }
+            throw APIError.serverError("Erro ao trocar senha")
+        }
+        
+        let changePasswordResponse = try JSONDecoder().decode(ChangePasswordResponse.self, from: data)
+        return changePasswordResponse.token
+    }
+    
+    func deleteAccount(token: String) async throws {
+        let url = URL(string: "\(baseURL)/api/auth/delete-account/")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "DELETE"
+        request.setValue("Token \(token)", forHTTPHeaderField: "Authorization")
+        
+        let (_, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 204 else {
+            throw APIError.serverError("Erro ao encerrar conta")
+        }
+    }
+    
     // MARK: - Runs API
     
     struct APIRun: Codable {
