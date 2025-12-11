@@ -57,6 +57,16 @@ struct DashboardView: View {
                                 )
                                 .foregroundStyle(.blue.gradient)
                             }
+                            .chartXAxis {
+                                AxisMarks(values: .automatic) { value in
+                                    if let date = value.as(Date.self) {
+                                        AxisValueLabel {
+                                            Text(date, format: .dateTime.day().month(.abbreviated))
+                                        }
+                                    }
+                                }
+                            }
+                            .environment(\.locale, Locale(identifier: "pt_BR"))
                             .frame(height: 200)
                             .padding(.horizontal)
                         }
@@ -78,6 +88,16 @@ struct DashboardView: View {
                                 .foregroundStyle(.purple.gradient)
                                 .symbol(Circle())
                             }
+                            .chartXAxis {
+                                AxisMarks(values: .automatic) { value in
+                                    if let date = value.as(Date.self) {
+                                        AxisValueLabel {
+                                            Text(date, format: .dateTime.day().month(.abbreviated))
+                                        }
+                                    }
+                                }
+                            }
+                            .environment(\.locale, Locale(identifier: "pt_BR"))
                             .frame(height: 200)
                             .padding(.horizontal)
                         }
