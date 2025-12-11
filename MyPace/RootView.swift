@@ -27,8 +27,12 @@ struct RootView: View {
     
     var body: some View {
         TabView {
-            Tab("Início", systemImage: "figure.run") {
-                ContentView(
+            Tab("Início", systemImage: "house") {
+                DashboardView()
+            }
+            
+            Tab("Adicionar", systemImage: "plus.circle.fill") {
+                AddRunView(
                     authManager: authManager,
                     syncManager: syncManager
                 )
