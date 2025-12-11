@@ -23,26 +23,37 @@ class SyncManager {
         modelContext: ModelContext,
         authManager: AuthManager
     ) async throws {
-        // 1. Salva localmente sempre
-        modelContext.insert(run)
-        try modelContext.save()
-        
-        // 2. Se estiver logado, sincroniza com API
+        // 1. Se estiver logado, primeiro envia para API para obter o ID correto
         if let token = authManager.token {
-            Task {
-                do {
-                    _ = try await APIService.shared.createRun(
-                        token: token,
-                        date: run.date,
-                        distanceKm: run.distanceKm,
-                        timeMinutes: run.timeMinutes
-                    )
-                    print("✅ Corrida sincronizada com API")
-                } catch {
-                    print("⚠️ Erro ao sincronizar com API: \(error)")
-                    // Falha silenciosa - dados ficam salvos localmente
-                }
+            do {
+                let apiRun = try await APIService.shared.createRun(
+                    token: token,
+                    date: run.date,
+                    distanceKm: run.distanceKm,
+                    timeMinutes: run.timeMinutes
+                )
+                
+                // Cria corrida com o ID da API
+                let newRun = Run(
+                    id: apiRun.id,
+                    date: apiRun.date,
+                    distanceKm: Double(apiRun.distanceKm) ?? 0,
+                    timeMinutes: Double(apiRun.timeMinutes) ?? 0
+                )
+                modelContext.insert(newRun)
+                try modelContext.save()
+                print("✅ Corrida salva localmente e na API com ID: \(apiRun.id)")
+            } catch {
+                print("⚠️ Erro ao sincronizar com API, salvando apenas localmente: \(error)")
+                // Falha na API - salva localmente com ID local
+                modelContext.insert(run)
+                try modelContext.save()
             }
+        } else {
+            // 2. Se não estiver logado, salva apenas localmente
+            modelContext.insert(run)
+            try modelContext.save()
+            print("✅ Corrida salva localmente (offline)")
         }
     }
     
@@ -90,17 +101,32 @@ class SyncManager {
             let localRuns = try modelContext.fetch(descriptor)
             let localIds = Set(localRuns.map { $0.id })
             
+            // Cria set de corridas locais por data/distância/tempo para detectar duplicatas
+            let localRunsSet = Set(localRuns.map { run in
+                "\(run.date.timeIntervalSince1970)_\(run.distanceKm)_\(run.timeMinutes)"
+            })
+            
             // Adiciona corridas que existem na API mas não localmente
             for apiRun in apiRuns {
-                if !localIds.contains(apiRun.id) {
+                let apiDistance = Double(apiRun.distanceKm) ?? 0
+                let apiTime = Double(apiRun.timeMinutes) ?? 0
+                let apiKey = "\(apiRun.date.timeIntervalSince1970)_\(apiDistance)_\(apiTime)"
+                
+                // Verifica se já existe por ID ou por data/distância/tempo
+                if !localIds.contains(apiRun.id) && !localRunsSet.contains(apiKey) {
                     // Converte APIRun para Run
                     let newRun = Run(
                         id: apiRun.id,
                         date: apiRun.date,
-                        distanceKm: Double(apiRun.distanceKm) ?? 0,
-                        timeMinutes: Double(apiRun.timeMinutes) ?? 0
+                        distanceKm: apiDistance,
+                        timeMinutes: apiTime
                     )
                     modelContext.insert(newRun)
+                    print("✅ Adicionando corrida da API: \(apiRun.id)")
+                } else if localIds.contains(apiRun.id) {
+                    print("⏭️ Corrida já existe (mesmo ID): \(apiRun.id)")
+                } else {
+                    print("⏭️ Corrida duplicada detectada (mesma data/distância/tempo)")
                 }
             }
             
@@ -129,8 +155,25 @@ class SyncManager {
         let apiRuns = try await APIService.shared.fetchRuns(token: token)
         let apiIds = Set(apiRuns.map { $0.id })
         
+        // Cria set de corridas da API por data/distância/tempo para detectar duplicatas
+        let apiRunsSet = Set(apiRuns.map { run in
+            let distance = Double(run.distanceKm) ?? 0
+            let time = Double(run.timeMinutes) ?? 0
+            return "\(run.date.timeIntervalSince1970)_\(distance)_\(time)"
+        })
+        
         // Faz upload das corridas que só existem localmente
         for run in localRuns where !apiIds.contains(run.id) {
+            let runKey = "\(run.date.timeIntervalSince1970)_\(run.distanceKm)_\(run.timeMinutes)"
+            
+            // Verifica se já existe uma corrida igual na API
+            if apiRunsSet.contains(runKey) {
+                print("⏭️ Corrida local já existe na API (mesma data/distância/tempo), pulando upload")
+                // Remove a corrida local duplicada
+                modelContext.delete(run)
+                continue
+            }
+            
             do {
                 let apiRun = try await APIService.shared.createRun(
                     token: token,
