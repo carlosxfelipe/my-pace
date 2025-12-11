@@ -23,6 +23,14 @@ struct HistoryView: View {
         return df
     }
     
+    private func formattedDateWithWeekday(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "pt_BR")
+        formatter.dateFormat = "EEEE, d 'de' MMMM 'de' yyyy"
+        let dateString = formatter.string(from: date)
+        return dateString.prefix(1).uppercased() + dateString.dropFirst()
+    }
+    
     var body: some View {
         NavigationStack {
             Group {
@@ -47,7 +55,7 @@ struct HistoryView: View {
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                                 
-                                Text(dateFormatter.string(from: run.date))
+                                Text(formattedDateWithWeekday(run.date))
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
