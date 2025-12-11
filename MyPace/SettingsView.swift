@@ -152,6 +152,13 @@ struct SettingsView: View {
         isSyncing = true
         
         do {
+            // 1. Primeiro faz upload das corridas locais
+            try await syncManager.uploadLocalRuns(
+                modelContext: modelContext,
+                authManager: authManager
+            )
+            
+            // 2. Depois baixa corridas da API
             try await syncManager.syncFromAPI(
                 modelContext: modelContext,
                 authManager: authManager

@@ -51,7 +51,7 @@ struct AddRunView: View {
                             .keyboardType(.decimalPad)
                     }
                     
-                    DatePicker("Data", selection: $date, displayedComponents: .date)
+                    DatePicker("Data", selection: $date, in: ...Date(), displayedComponents: .date)
                         .environment(\.locale, Locale(identifier: "pt_BR"))
                 }
                 

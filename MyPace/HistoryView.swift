@@ -8,6 +8,13 @@
 import SwiftUI
 import SwiftData
 
+enum RunFilter: String, CaseIterable {
+    case all = "Todos"
+    case last7Days = "7 dias"
+    case last30Days = "30 dias"
+    case last3Months = "3 meses"
+}
+
 struct HistoryView: View {
     let runs: [Run]
     let modelContext: ModelContext
@@ -15,6 +22,8 @@ struct HistoryView: View {
     let syncManager: SyncManager
     
     @State private var showClearAllConfirmation = false
+    @State private var selectedFilter: RunFilter = .all
+    @State private var searchText = ""
     
     private var dateFormatter: DateFormatter {
         let df = DateFormatter()
@@ -31,6 +40,37 @@ struct HistoryView: View {
         return dateString.prefix(1).uppercased() + dateString.dropFirst()
     }
     
+    private var filteredRuns: [Run] {
+        var filtered = runs
+        
+        // Filtro por período
+        let now = Date()
+        switch selectedFilter {
+        case .all:
+            break
+        case .last7Days:
+            let sevenDaysAgo = Calendar.current.date(byAdding: .day, value: -7, to: now)!
+            filtered = filtered.filter { $0.date >= sevenDaysAgo }
+        case .last30Days:
+            let thirtyDaysAgo = Calendar.current.date(byAdding: .day, value: -30, to: now)!
+            filtered = filtered.filter { $0.date >= thirtyDaysAgo }
+        case .last3Months:
+            let threeMonthsAgo = Calendar.current.date(byAdding: .month, value: -3, to: now)!
+            filtered = filtered.filter { $0.date >= threeMonthsAgo }
+        }
+        
+        // Filtro por busca (distância ou pace)
+        if !searchText.isEmpty {
+            filtered = filtered.filter { run in
+                let distanceStr = String(format: "%.2f", run.distanceKm)
+                let paceStr = String(format: "%.2f", run.pace)
+                return distanceStr.contains(searchText) || paceStr.contains(searchText)
+            }
+        }
+        
+        return filtered
+    }
+    
     var body: some View {
         NavigationStack {
             Group {
@@ -40,9 +80,30 @@ struct HistoryView: View {
                         systemImage: "clock.arrow.circlepath",
                         description: Text("Salve uma corrida na aba Início para vê-la aqui.")
                     )
+                } else if filteredRuns.isEmpty {
+                    ContentUnavailableView(
+                        "Nenhuma corrida encontrada",
+                        systemImage: "magnifyingglass",
+                        description: Text("Tente ajustar os filtros ou busca.")
+                    )
                 } else {
                     List {
-                        ForEach(runs) { run in
+                        Section {
+                            Picker("Período", selection: $selectedFilter) {
+                                ForEach(RunFilter.allCases, id: \.self) { filter in
+                                    Text(filter.rawValue).tag(filter)
+                                }
+                            }
+                            .pickerStyle(.segmented)
+                        }
+                        
+                        Section {
+                            Text("\(filteredRuns.count) corrida\(filteredRuns.count == 1 ? "" : "s")")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        
+                        ForEach(filteredRuns) { run in
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(String(format: "%.2f min/km", run.pace))
                                     .font(.headline)
@@ -68,6 +129,9 @@ struct HistoryView: View {
                 }
             }
             .navigationTitle("Histórico")
+            .if(!runs.isEmpty) { view in
+                view.searchable(text: $searchText, prompt: "Buscar por distância ou pace")
+            }
             .toolbar {
                 if !runs.isEmpty {
                     ToolbarItem(placement: .topBarTrailing) {
@@ -123,6 +187,17 @@ struct HistoryView: View {
                     print("Erro ao deletar: \(error)")
                 }
             }
+        }
+    }
+}
+
+extension View {
+    @ViewBuilder
+    func `if`<Content: View>(_ condition: Bool, transform: (Self) -> Content) -> some View {
+        if condition {
+            transform(self)
+        } else {
+            self
         }
     }
 }
