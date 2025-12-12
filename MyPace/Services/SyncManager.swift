@@ -103,14 +103,16 @@ class SyncManager {
             
             // Cria set de corridas locais por data/distância/tempo para detectar duplicatas
             let localRunsSet = Set(localRuns.map { run in
-                "\(run.date.timeIntervalSince1970)_\(run.distanceKm)_\(run.timeMinutes)"
+                let roundedDate = Int(run.date.timeIntervalSince1970)
+                return "\(roundedDate)_\(run.distanceKm)_\(run.timeMinutes)"
             })
             
             // Adiciona corridas que existem na API mas não localmente
             for apiRun in apiRuns {
                 let apiDistance = Double(apiRun.distanceKm) ?? 0
                 let apiTime = Double(apiRun.timeMinutes) ?? 0
-                let apiKey = "\(apiRun.date.timeIntervalSince1970)_\(apiDistance)_\(apiTime)"
+                let roundedApiDate = Int(apiRun.date.timeIntervalSince1970)
+                let apiKey = "\(roundedApiDate)_\(apiDistance)_\(apiTime)"
                 
                 // Verifica se já existe por ID ou por data/distância/tempo
                 if !localIds.contains(apiRun.id) && !localRunsSet.contains(apiKey) {
@@ -159,12 +161,14 @@ class SyncManager {
         let apiRunsSet = Set(apiRuns.map { run in
             let distance = Double(run.distanceKm) ?? 0
             let time = Double(run.timeMinutes) ?? 0
-            return "\(run.date.timeIntervalSince1970)_\(distance)_\(time)"
+            let roundedDate = Int(run.date.timeIntervalSince1970)
+            return "\(roundedDate)_\(distance)_\(time)"
         })
         
         // Faz upload das corridas que só existem localmente
         for run in localRuns where !apiIds.contains(run.id) {
-            let runKey = "\(run.date.timeIntervalSince1970)_\(run.distanceKm)_\(run.timeMinutes)"
+            let roundedDate = Int(run.date.timeIntervalSince1970)
+            let runKey = "\(roundedDate)_\(run.distanceKm)_\(run.timeMinutes)"
             
             // Verifica se já existe uma corrida igual na API
             if apiRunsSet.contains(runKey) {
