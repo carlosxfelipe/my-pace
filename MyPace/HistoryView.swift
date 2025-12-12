@@ -135,11 +135,17 @@ struct HistoryView: View {
             .toolbar {
                 if !runs.isEmpty {
                     ToolbarItem(placement: .topBarTrailing) {
-                        Button {
-                            showClearAllConfirmation = true
+                        Menu {
+                            Button(role: .destructive) {
+                                showClearAllConfirmation = true
+                            } label: {
+                                Label("Limpar tudo", systemImage: "trash")
+                            }
                         } label: {
-                            Image(systemName: "trash")
-                                .foregroundStyle(.red)
+                            Image(systemName: "ellipsis")
+                                .foregroundStyle(.primary)
+                                .padding(8)
+                                .background(.ultraThinMaterial, in: Circle())
                         }
                     }
                 }
