@@ -13,28 +13,31 @@ enum MainTab {
     case settings
 }
 
+struct TabItem: Identifiable {
+    let id = UUID()
+    let icon: String
+    let title: String
+    let tab: MainTab
+}
+
 struct GlassBottomBar: View {
     @Binding var selectedTab: MainTab
     
+    private let tabItems: [TabItem] = [
+        TabItem(icon: "figure.run", title: "Início", tab: .run),
+        TabItem(icon: "clock.arrow.circlepath", title: "Histórico", tab: .history),
+        TabItem(icon: "gearshape", title: "Config.", tab: .settings)
+    ]
+
     var body: some View {
         HStack(spacing: 32) {
-            tabButton(
-                icon: "figure.run",
-                title: "Início",
-                tab: .run
-            )
-            
-            tabButton(
-                icon: "clock.arrow.circlepath",
-                title: "Histórico",
-                tab: .history
-            )
-            
-            tabButton(
-                icon: "gearshape",
-                title: "Config.",
-                tab: .settings
-            )
+            ForEach(tabItems) { item in
+                tabButton(
+                    icon: item.icon,
+                    title: item.title,
+                    tab: item.tab
+                )
+            }
         }
         .padding(.horizontal, 24)
         .padding(.vertical, 12)
