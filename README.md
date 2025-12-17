@@ -23,8 +23,8 @@ MyPace é um aplicativo simples e eficiente para corredores que querem registrar
 
 - **SwiftUI** - Interface moderna e declarativa
 - **SwiftData** - Persistência local com SQLite
-- **iOS 17+** - Recursos mais recentes da Apple
-- **Xcode 15+** - Desenvolvimento nativo
+- **iOS 26.1+** - Recursos mais recentes da Apple
+- **Xcode 26.1.1+** - Desenvolvimento nativo
 
 ### Backend (Opcional)
 
@@ -58,8 +58,8 @@ MyPace/
 
 ### Pré-requisitos
 
-- macOS com Xcode 15+
-- iOS 17+ (simulador ou dispositivo real)
+- macOS com Xcode 26.1.1+
+- iOS 26.1+ (simulador ou dispositivo real)
 - Conta Apple Developer (para rodar em dispositivo físico)
 
 ### Instalação
@@ -80,6 +80,18 @@ MyPace/
 3. **Execute o app**
    - Selecione um simulador ou dispositivo
    - Pressione `Cmd + R` ou clique no botão Play
+
+### 🔐 Configurando Signing (obrigatório)
+
+1. Selecione o **projeto** no Xcode
+2. Vá em **Targets → MyPace**
+3. Abra **Signing & Capabilities**
+4. Em **Team**, selecione seu Apple ID
+
+Se não aparecer:
+
+- `Xcode → Settings → Accounts`
+- Adicione seu Apple ID
 
 ### Modo Offline (Padrão)
 
@@ -172,19 +184,6 @@ XCTestCase para modelos e lógica de negócio
 // UI Tests
 XCUITest para fluxos de navegação e interação
 ```
-
-## 📝 Próximas Features
-
-- [ ] Estatísticas detalhadas (pace médio, melhor pace, total de km)
-- [ ] Gráficos de progresso ao longo do tempo
-- [ ] Metas e desafios personalizados
-- [ ] Notificações de lembrete para treinar
-- [ ] Exportar dados (CSV, PDF)
-- [ ] Widget para tela inicial
-- [ ] Apple Watch companion app
-- [ ] Integração com Apple Health
-- [ ] Compartilhamento de corridas em redes sociais
-- [ ] Keychain para armazenamento seguro do token
 
 ## 📄 Licença
 
